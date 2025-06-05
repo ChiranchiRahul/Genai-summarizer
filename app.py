@@ -1,15 +1,17 @@
 import streamlit as st
 import os
-from transformers import pipeline
+from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM
 
-# ✅ Use safe writable directories for model caching
+# ✅ Use safe writable cache directory for model files
 os.environ["TRANSFORMERS_CACHE"] = "/tmp"
 os.environ["HF_HOME"] = "/tmp"
 
-# ✅ Load summarizer model to /tmp and cache it
+# ✅ Load model and tokenizer explicitly with cache_dir
 @st.cache_resource(show_spinner=False)
 def load_model():
-    return pipeline("summarization", model="sshleifer/distilbart-cnn-12-6", cache_dir="/tmp")
+    tokenizer = AutoTokenizer.from_pretrained("sshleifer/distilbart-cnn-12-6", cache_dir="/tmp")
+    model = AutoModelForSeq2SeqLM.from_pretrained("sshleifer/distilbart-cnn-12-6", cache_dir="/tmp")
+    return pipeline("summarization", model=model, tokenizer=tokenizer)
 
 # ✅ Page config
 st.set_page_config(
@@ -18,7 +20,7 @@ st.set_page_config(
     page_icon="🧠"
 )
 
-# ✅ Custom CSS for a clean dark UI
+# ✅ Custom styling
 st.markdown("""
     <style>
         html, body, [class*="css"] {
@@ -57,7 +59,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ✅ Title and instructions
+# ✅ App title and subtitle
 st.markdown("<h1 class='title'>🧠 GenAI Summarizer</h1>", unsafe_allow_html=True)
 st.markdown("<div class='subtitle'>Paste any article text and get a sharp, concise summary powered by DistilBART.</div>", unsafe_allow_html=True)
 
@@ -68,7 +70,7 @@ with st.spinner("🔄 Initializing AI engine..."):
 # ✅ Text input
 article_text = st.text_area("", height=300, placeholder="Paste your full article here...")
 
-# ✅ Button and result
+# ✅ Summarize button
 if st.button("🚀 Summarize"):
     if article_text.strip():
         with st.spinner("Summarizing..."):
